@@ -13,7 +13,7 @@
 start:
   .code16                     # Assemble for 16-bit mode
   cli                         # Disable interrupts
-  cld                         # String operations increment
+  cld                         # String operations incrementf
 
   # Set up the important data segment registers (DS, ES, SS).
   xorw    %ax,%ax             # Segment number zero
@@ -29,7 +29,6 @@ seta20.1:
   inb     $0x64,%al               # Wait for not busy
   testb   $0x2,%al
   jnz     seta20.1
-
   movb    $0xd1,%al               # 0xd1 -> port 0x64
   outb    %al,$0x64
 
