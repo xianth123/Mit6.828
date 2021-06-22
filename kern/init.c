@@ -33,8 +33,6 @@ i386_init(void)
 
 	cprintf("x=%d y=%d\n", 3);
 	// Test the stack backtrace function (lab 1 only)
-	test_backtrace(5);
-
 	// test Exercise 8-4
 	// Drop into the kernel monitor.
 	while (1)
