@@ -51,6 +51,7 @@ SECTIONS
 		PROVIDE(edata = .);
 		*(.bss)
 		PROVIDE(end = .);
+		/* end value: f0115000*/
 		BYTE(0)
 	}
 
