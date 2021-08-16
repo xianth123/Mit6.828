@@ -1,5 +1,6 @@
 #include <inc/mmu.h>
 #include <inc/x86.h>
+#include <inc/error.h>
 #include <inc/assert.h>
 
 #include <kern/pmap.h>
@@ -65,6 +66,29 @@ trap_init(void)
 	extern struct Segdesc gdt[];
 
 	// LAB 3: Your code here.
+	SETGATE(idt[0], 0, GD_KT, &IRQ0, 0);
+	SETGATE(idt[1], 0, GD_KT, &IRQ1, 0);
+	SETGATE(idt[2], 0, GD_KT, &IRQ2, 0);
+	SETGATE(idt[3], 0, GD_KT, &IRQ3, 3);
+	SETGATE(idt[4], 0, GD_KT, &IRQ4, 0);
+	SETGATE(idt[5], 0, GD_KT, &IRQ5, 0);
+	SETGATE(idt[6], 0, GD_KT, &IRQ6, 0);
+	SETGATE(idt[7], 0, GD_KT, &IRQ7, 0);
+	SETGATE(idt[8], 0, GD_KT, &IRQ8, 0);
+	SETGATE(idt[9], 0, GD_KT, &IRQ9, 0);
+	SETGATE(idt[10], 0, GD_KT, &IRQ10, 0);
+	SETGATE(idt[11], 0, GD_KT, &IRQ11, 0);
+	SETGATE(idt[12], 0, GD_KT, &IRQ12, 0);
+	SETGATE(idt[13], 0, GD_KT, &IRQ13, 0);
+	SETGATE(idt[14], 0, GD_KT, &IRQ14, 0);
+	SETGATE(idt[15], 0, GD_KT, &IRQ15, 0);
+	SETGATE(idt[16], 0, GD_KT, &IRQ16, 0);
+	SETGATE(idt[17], 0, GD_KT, &IRQ17, 0);
+	SETGATE(idt[18], 0, GD_KT, &IRQ18, 0);
+	SETGATE(idt[19], 0, GD_KT, &IRQ19, 0);
+
+	SETGATE(idt[48], 0, GD_KT, &IRQ48, 3);
+
 
 	// Per-CPU setup 
 	trap_init_percpu();
@@ -144,14 +168,30 @@ trap_dispatch(struct Trapframe *tf)
 {
 	// Handle processor exceptions.
 	// LAB 3: Your code here.
-
-	// Unexpected trap: The user process or the kernel has a bug.
-	print_trapframe(tf);
-	if (tf->tf_cs == GD_KT)
-		panic("unhandled trap in kernel");
-	else {
-		env_destroy(curenv);
-		return;
+	if (tf->tf_trapno == T_PGFLT){
+		page_fault_handler(tf);
+	} else if (tf->tf_trapno == T_BRKPT){
+		monitor(tf);
+	} else if (tf->tf_trapno == T_SYSCALL){
+		uint32_t call_num = (uint32_t)tf->tf_regs.reg_eax;
+		uint32_t a1 = (uint32_t)tf->tf_regs.reg_edx;
+		uint32_t a2 = (uint32_t)tf->tf_regs.reg_ecx;
+		uint32_t a3 = (uint32_t)tf->tf_regs.reg_ebx;
+		uint32_t a4 = (uint32_t)tf->tf_regs.reg_edi;
+		uint32_t a5 = (uint32_t)tf->tf_regs.reg_esi;
+		int32_t result =  syscall(call_num, a1, a2, a3, a4, a5);
+		if (result != -E_INVAL){
+			tf->tf_regs.reg_eax = (uint32_t)result;
+		}
+	} else {
+		// Unexpected trap: The user process or the kernel has a bug.
+		print_trapframe(tf);
+		if (tf->tf_cs == GD_KT)
+			panic("unhandled trap in kernel");
+		else {
+			env_destroy(curenv);
+			return;
+		}
 	}
 }
 
@@ -168,6 +208,8 @@ trap(struct Trapframe *tf)
 	assert(!(read_eflags() & FL_IF));
 
 	cprintf("Incoming TRAP frame at %p\n", tf);
+
+	print_trapframe(tf);
 
 	if ((tf->tf_cs & 3) == 3) {
 		// Trapped from user mode.
@@ -206,12 +248,35 @@ page_fault_handler(struct Trapframe *tf)
 
 	// LAB 3: Your code here.
 
+	if ((tf->tf_cs & 3) != 3) {
+			pte_t * pte = pgdir_walk(kern_pgdir, (void*)fault_va, 0);
+			if(pte && *pte){
+				cprintf("pte is %x\n", pte);
+				cprintf("*pte is %x\n", *pte);
+			} 
+			if (pte){
+				cprintf("pte is %x\n", pte);
+				cprintf("*pte is %x\n", *pte);
+			}
+			panic("Kernel page fault error: va %x\n", fault_va);
+		}
+
 	// We've already handled kernel-mode exceptions, so if we get here,
 	// the page fault happened in user mode.
 
 	// Destroy the environment that caused the fault.
-	cprintf("[%08x] user fault va %08x ip %08x\n",
-		curenv->env_id, fault_va, tf->tf_eip);
+
+	pte_t * pte = pgdir_walk(curenv->env_pgdir, (void*)fault_va, 0);
+	if(pte && *pte){
+		cprintf("pte is %x\n", pte);
+		cprintf("*pte is %x\n", *pte);
+	} 
+	if (pte){
+		cprintf("pte is %x\n", pte);
+		cprintf("*pte is %x\n", *pte);
+	}
+
+	cprintf("[%08x] user fault va %08x ip %08x\n", curenv->env_id, fault_va, tf->tf_eip);
 	print_trapframe(tf);
 	env_destroy(curenv);
 }

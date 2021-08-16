@@ -152,7 +152,10 @@ mem_init(void)
 	// Find out how much memory the machine has (npages & npages_basemem).
 	i386_detect_memory();
 
-	boot_alloc(0);
+	// Mark physical page 0 as in use, even if we never need them
+	// boot alloc 0 alloc no memory
+	boot_alloc(0); 
+	
 	// Remove this line when you're ready to test this function.
 
 	// panic("mem_init: This function is not finished\n");
@@ -162,13 +165,14 @@ mem_init(void)
 	extern char end[];		// bss segment end
 	// cprintf("start: kern_pgdir is: %x\n", kern_pgdir);
 	// cprintf("start: kern_pgdir addr: %x\n", &kern_pgdir);
-	// cprintf("start: end addr: %x\n", (void *)end);
+	cprintf("start: end addr: %x\n", (void *)end);
 	kern_pgdir = (pde_t *) boot_alloc(PGSIZE);
 	memset(kern_pgdir, 0, PGSIZE);
 	// Permissions: kernel R, user R
 	cprintf("kern_pgdir is: %x\n", kern_pgdir);
 	cprintf("kern_pgdir addr: %x\n", &kern_pgdir);
 
+	// test code , could delete
 	void* a = boot_alloc(1024);
 	cprintf("a: %x\n", a);
 	memset(a, 0, PGSIZE);
@@ -200,9 +204,8 @@ mem_init(void)
 	// LAB 3: Your code here.
 	cprintf("----------------------------------\n");
 	envs = boot_alloc(NENV * sizeof(struct Env));
-	cprintf("envs point %x\n", envs);
-	cprintf("struct env size: %x, env array size %x\n", sizeof(struct Env), sizeof(struct  Env)*NENV);
-	panic("envs");
+	uintptr_t envs_end = (uintptr_t)boot_alloc(0);
+	memset((void *)envs, 0, sizeof(struct  Env)*NENV);
 
 	//////////////////////////////////////////////////////////////////////
 	// Now that we've allocated the initial kernel data structures, we set
@@ -247,9 +250,17 @@ mem_init(void)
 	//    - the new image at UENVS  -- kernel R, user R
 	//    - envs itself -- kernel RW, user NONE
 	// LAB 3: Your code here.
-
-
-
+	struct PageInfo *env_pp;
+	uintptr_t envs_va = UENVS;
+	physaddr_t envs_pa = PADDR((void *)envs);
+	physaddr_t envs_end_pa = PADDR((void*)envs_end);
+	while (envs_pa < envs_end_pa)
+	{
+		env_pp = pa2page(envs_pa);
+		page_insert(kern_pgdir, env_pp, (void*)envs_va, PTE_P|PTE_U|PTE_W);
+		envs_va = envs_va + PGSIZE;
+		envs_pa = envs_pa + PGSIZE;
+	}
 
 	//////////////////////////////////////////////////////////////////////
 	// Use the physical memory that 'bootstack' refers to as the kernel
@@ -319,8 +330,8 @@ mem_init(void)
 	{
 		int pdx = PDX(va_mem);
 		pte_mem = pgdir_walk(kern_pgdir, (void*)va_mem, true);
-		kern_pgdir[pdx] = kern_pgdir[pdx] | PTE_P | PTE_U | PTE_W;
-		*pte_mem = PTE_ADDR(pa_mem) | PTE_P | PTE_U | PTE_W;
+		kern_pgdir[pdx] = kern_pgdir[pdx] | PTE_P | PTE_W;
+		*pte_mem = PTE_ADDR(pa_mem) | PTE_P | PTE_W;
 		va_mem = va_mem + PGSIZE;
 		pa_mem = pa_mem + PGSIZE;
 	}
@@ -339,6 +350,7 @@ mem_init(void)
 	//
 	// If the machine reboots at this point, you've probably set up your
 	// kern_pgdir wrong.
+	cprintf("kern_pgdir: %x\n", kern_pgdir);
 	lcr3(PADDR(kern_pgdir));
 
 	check_page_free_list(0);
@@ -405,7 +417,7 @@ page_init(void)
 
 	uint32_t skip_page=0;
 	physaddr_t alloc_end;
-	alloc_end = (physaddr_t)((uint32_t)&pages[npages] - (uint32_t)KERNBASE);
+	alloc_end = (physaddr_t)(PADDR(boot_alloc(0)));
 	for (i = 0; i < npages; i++){
 		physaddr_t page_phy_addr_start, page_pyh_addr_end;
 
@@ -684,7 +696,6 @@ page_remove(pde_t *pgdir, void *va)
 	pte_t* pte;
 	struct PageInfo *pi;
 	pi = page_lookup(pgdir, va, &pte);
-	cprintf("look up pi: %x\n", pi);
 	if (!pi){
 		return;
 	}
@@ -698,8 +709,6 @@ page_remove(pde_t *pgdir, void *va)
 		pgdir[PDX(va)] = 0;
 	}
 	page_decref(pi);
-	cprintf(" pi ref: %d\n", pi->pp_ref);
-	cprintf("def: pi ref: %d\n", pi->pp_ref);
 	tlb_invalidate(pgdir, va);
 	return;
 }
@@ -740,6 +749,32 @@ int
 user_mem_check(struct Env *env, const void *va, size_t len, int perm)
 {
 	// LAB 3: Your code here.
+	uint32_t va_end = (uint32_t) va + (uint32_t) len;
+	uint32_t p_start = (uint32_t) va / (uint32_t) PGSIZE;
+	uint32_t p_end =  va_end / (uint32_t) PGSIZE;
+	for(uint32_t p = p_start; p <= p_end; p++){
+		uint32_t page_va = p * PGSIZE;
+		// check whether in kernel space
+		if (p == p_start){
+			page_va = (uint32_t)va;
+		}
+
+		if (page_va >= ULIM){
+			user_mem_check_addr = page_va;
+			return -E_FAULT;
+		}
+
+		pte_t * pte_entry_p = pgdir_walk(env->env_pgdir, (void *)page_va, 0);
+		if(pte_entry_p == NULL) {
+			user_mem_check_addr = page_va;
+			return -E_FAULT;
+		}
+		pte_t pte_entry = *pte_entry_p;
+		if ((perm & pte_entry) != perm){
+			user_mem_check_addr = page_va;
+			return -E_FAULT;
+		}
+	}
 
 	return 0;
 }
@@ -755,6 +790,7 @@ void
 user_mem_assert(struct Env *env, const void *va, size_t len, int perm)
 {
 	if (user_mem_check(env, va, len, perm | PTE_U) < 0) {
+		cprintf("error va is %x\n", va);
 		cprintf("[%08x] user_mem_check assertion failure for "
 			"va %08x\n", env->env_id, user_mem_check_addr);
 		env_destroy(env);	// may not return
@@ -935,8 +971,9 @@ check_kern_pgdir(void)
 		assert(check_va2pa(pgdir, UENVS + i) == PADDR(envs) + i);
 
 	// check phys mem
-	for (i = 0; i < npages * PGSIZE; i += PGSIZE)
+	for (i = 0; i < npages * PGSIZE; i += PGSIZE){
 		assert(check_va2pa(pgdir, KERNBASE + i) == i);
+	}
 	cprintf("pages mem success\n");
 	cprintf("bootstack: %x\n", bootstack);
 	cprintf("bootstack top: %x\n", bootstacktop);

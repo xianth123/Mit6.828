@@ -1,7 +1,9 @@
 {
     "files.associations": {
         "stab.h": "c",
-        "mmu.h": "c"
+        "mmu.h": "c",
+        "trap.h": "c",
+        "pmap.h": "c"
     },
     "editor.wordWrap": "on"
 }
