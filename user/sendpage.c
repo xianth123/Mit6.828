@@ -3,8 +3,8 @@
 
 #include <inc/lib.h>
 
-const char *str1 = "hello child environment! how are you?";
-const char *str2 = "hello parent environment! I'm good.";
+ char *str1 = "hello child environment! how are you?";
+ char *str2 = "hello parent environment! I'm good.";
 
 #define TEMP_ADDR	((char*)0xa00000)
 #define TEMP_ADDR_CHILD	((char*)0xb00000)
@@ -13,6 +13,12 @@ void
 umain(int argc, char **argv)
 {
 	envid_t who;
+	cprintf("\n\n\n");
+	cprintf("-------------------------------\n");
+	cprintf("str1 addr: %x \n", &str1);
+	cprintf("str2 addr: %x \n", &str2);
+	cprintf("str1 : %s \n", str1);
+	cprintf("str2 : %s \n", str2);
 
 	if ((who = fork()) == 0) {
 		// Child

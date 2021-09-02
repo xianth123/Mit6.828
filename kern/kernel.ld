@@ -53,6 +53,7 @@ SECTIONS
 		*(.bss .bss.*)
 		*(COMMON)
 		PROVIDE(end = .);
+		BYTE(0)
 	}
 
 

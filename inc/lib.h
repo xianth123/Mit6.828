@@ -20,6 +20,8 @@
 
 #define USED(x)		(void)(x)
 
+// extern void sys_print_pgdir_va_info(pde_t *pgdir, void * va);
+
 // main user program
 void	umain(int argc, char **argv);
 
@@ -53,6 +55,8 @@ int	sys_page_map(envid_t src_env, void *src_pg,
 int	sys_page_unmap(envid_t env, void *pg);
 int	sys_ipc_try_send(envid_t to_env, uint32_t value, void *pg, int perm);
 int	sys_ipc_recv(void *rcv_pg);
+
+int sys_print_pgdir_va_info(pde_t * pgdir, void * va);
 
 // This must be inlined.  Exercise for reader: why?
 static inline envid_t __attribute__((always_inline))

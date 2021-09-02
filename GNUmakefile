@@ -76,7 +76,7 @@ OBJDUMP	:= $(GCCPREFIX)objdump
 NM	:= $(GCCPREFIX)nm
 
 # Native commands
-NCC	:= gcc $(CC_VER) -pipe
+NCC	:= gcc $(CC_VER) -pipef
 NATIVE_CFLAGS := $(CFLAGS) $(DEFS) $(LABDEFS) -I$(TOP) -MD -Wall
 TAR	:= gtar
 PERL	:= perl
@@ -155,7 +155,9 @@ QEMUOPTS += $(QEMUEXTRA)
 	sed "s/localhost:1234/localhost:$(GDBPORT)/" < $^ > $@
 
 gdb:
-	$(GDB) -n -x .gdbinit
+	$(GDB) -tui -n -x .gdbinit
+
+# gdb -tui -n -x .gdbinit
 
 pre-qemu: .gdbinit
 

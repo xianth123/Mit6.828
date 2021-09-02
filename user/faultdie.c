@@ -15,5 +15,7 @@ void
 umain(int argc, char **argv)
 {
 	set_pgfault_handler(handler);
+	cprintf("jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj\n");
 	*(int*)0xDeadBeef = 0;
+	cprintf("6666666666666666\n");
 }

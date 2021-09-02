@@ -111,3 +111,8 @@ sys_ipc_recv(void *dstva)
 	return syscall(SYS_ipc_recv, 1, (uint32_t)dstva, 0, 0, 0, 0);
 }
 
+int
+sys_print_pgdir_va_info(pde_t *pgdir, void * vaddr){
+	return syscall(SYS_print_pgdir_va_info, 0, (uint32_t)pgdir, (uint32_t)vaddr, 0, 0, 0);
+}
+

@@ -23,7 +23,9 @@ i386_init(void)
 {
 	// Initialize the console.
 	// Can't call cprintf until after we do this!
-	cons_init();
+    cons_init();
+
+	int x, y;
 
 	cprintf("6828 decimal is %o octal!\n", 6828);
 
@@ -36,13 +38,17 @@ i386_init(void)
 
 	// Lab 4 multiprocessor initialization functions
 	mp_init();
+	cprintf("mp init compelted\n");
 	lapic_init();
+	cprintf("lapic init compelted\n");
 
 	// Lab 4 multitasking initialization functions
 	pic_init();
+	cprintf("pic init compelted\n");
 
 	// Acquire the big kernel lock before waking up APs
 	// Your code here:
+	lock_kernel();
 
 	// Starting non-boot CPUs
 	boot_aps();
@@ -52,7 +58,13 @@ i386_init(void)
 	ENV_CREATE(TEST, ENV_TYPE_USER);
 #else
 	// Touch all you want.
-	ENV_CREATE(user_primes, ENV_TYPE_USER);
+	// ENV_CREATE(user_primes, ENV_TYPE_USER);
+	ENV_CREATE(user_yield, ENV_TYPE_USER);
+	ENV_CREATE(user_yield, ENV_TYPE_USER);
+	ENV_CREATE(user_yield, ENV_TYPE_USER);
+	ENV_CREATE(user_yield, ENV_TYPE_USER);
+	ENV_CREATE(user_yield, ENV_TYPE_USER);
+	ENV_CREATE(user_yield, ENV_TYPE_USER);
 #endif // TEST*
 
 	// Schedule and run the first user environment!
@@ -109,6 +121,8 @@ mp_main(void)
 	// only one CPU can enter the scheduler at a time!
 	//
 	// Your code here:
+	lock_kernel();
+	sched_yield();
 
 	// Remove this after you finish Exercise 6
 	for (;;);
