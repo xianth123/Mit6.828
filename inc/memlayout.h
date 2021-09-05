@@ -82,6 +82,8 @@
  *     there if desired.  JOS user programs map pages temporarily at UTEMP.
  */
 
+// memory start 640K 0xa0000   memory end 130432k+640k = 0x08000000
+
 
 // All physical memory mapped at this address
 #define	KERNBASE	0xF0000000

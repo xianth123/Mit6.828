@@ -45,6 +45,7 @@ static void
 printnum(void (*putch)(int, void*), void *putdat,
 	 unsigned long long num, unsigned base, int width, int padc)
 {
+	char c;
 	// first recursively print all preceding (more significant) digits
 	if (num >= base) {
 		printnum(putch, putdat, num / base, base, width - 1, padc);
@@ -55,7 +56,9 @@ printnum(void (*putch)(int, void*), void *putdat,
 	}
 
 	// then print this (the least significant) digit
-	putch("0123456789abcdef"[num % base], putdat);
+	num = num % base;
+	c = "0123456789abcdef"[num];
+	putch(c, putdat);
 }
 
 // Get an unsigned int of various possible sizes from a varargs list,
@@ -215,11 +218,12 @@ vprintfmt(void (*putch)(int, void*), void *putdat, const char *fmt, va_list ap)
 		// (unsigned) octal
 		case 'o':
 			// Replace this with your code.
-			putch('X', putdat);
-			putch('X', putdat);
-			putch('X', putdat);
-			break;
-
+			num = getuint(&ap, lflag);
+			base = 8;
+			goto number;
+			// putch('X', putdat);
+			// putch('X', putdat);
+			// putch('X', putdat);
 		// pointer
 		case 'p':
 			putch('0', putdat);

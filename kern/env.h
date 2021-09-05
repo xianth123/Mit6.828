@@ -29,8 +29,8 @@ void	env_pop_tf(struct Trapframe *tf) __attribute__((noreturn));
 #define ENV_CREATE(x, type)						\
 	do {								\
 		extern uint8_t ENV_PASTE3(_binary_obj_, x, _start)[];	\
-		env_create(ENV_PASTE3(_binary_obj_, x, _start),		\
-			   type);					\
+		uint8_t *binary = ENV_PASTE3(_binary_obj_, x, _start); \
+		env_create(binary, type);					\
 	} while (0)
 
 #endif // !JOS_KERN_ENV_H
