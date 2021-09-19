@@ -12,6 +12,8 @@ xopen(const char *path, int mode)
 	
 	strcpy(fsipcbuf.open.req_path, path);
 	fsipcbuf.open.req_omode = mode;
+	cprintf("fspath addr %s\n", fsipcbuf.open.req_path);
+	cprintf("fspath addr %x\n", &fsipcbuf);
 
 	fsenv = ipc_find_env(ENV_TYPE_FS);
 	ipc_send(fsenv, FSREQ_OPEN, &fsipcbuf, PTE_P | PTE_W | PTE_U);
@@ -62,6 +64,7 @@ umain(int argc, char **argv)
 	// FD page.
 	fdcopy = *FVA;
 	sys_page_unmap(0, FVA);
+	cprintf("buf addr is %p\n", buf);
 
 	if ((r = devfile.dev_read(&fdcopy, buf, sizeof buf)) != -E_INVAL)
 		panic("serve_read does not handle stale fileids correctly: %e", r);

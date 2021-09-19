@@ -255,6 +255,12 @@ trap_dispatch(struct Trapframe *tf)
 	// Unexpected trap: The user process or the kernel has a bug.
 	if (tf->tf_trapno == T_PGFLT){
 		page_fault_handler(tf);
+	} else if(tf->tf_trapno == (IRQ_OFFSET + IRQ_KBD) ){
+		lapic_eoi();
+		kbd_intr();
+	} else if(tf->tf_trapno == (IRQ_OFFSET + IRQ_SERIAL) ){
+		lapic_eoi();
+		serial_intr();
 	} else if (tf->tf_trapno == T_BRKPT){
 		monitor(tf);
 	} else if (tf->tf_trapno == T_SYSCALL){
@@ -450,7 +456,6 @@ page_fault_handler(struct Trapframe *tf)
 	struct UTrapframe *utf;
 	uintptr_t utf_top;
 
-	cprintf("[%08x] user fault va %08x ip %08x\n", curenv->env_id, fault_va, tf->tf_eip);
 	if(curenv->env_pgfault_upcall){
 		// esp already in handler
 		if((tf->tf_esp >= UXSTACKTOP - PGSIZE)&&(tf->tf_esp < UXSTACKTOP)){
@@ -486,7 +491,6 @@ page_fault_handler(struct Trapframe *tf)
 		utf->utf_esp = tf->tf_esp;
 		(&(curenv->env_tf))->tf_eip = (uintptr_t)curenv->env_pgfault_upcall;
 		(&(curenv->env_tf))->tf_esp = utf_top;
-		cprintf("[%08x] env run\n", curenv->env_id);
 		env_run(curenv);
 	}
 	print_trapframe(tf);

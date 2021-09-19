@@ -226,10 +226,16 @@ main(int argc, char **argv)
 
 	if (argc < 3)
 		usage();
+	printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1\n");
+	printf("main run\n");
+	printf("argv[0]: %s, [1]: %s, [2]: %s\n", argv[0], argv[1], argv[2]);
 
 	nblocks = strtol(argv[2], &s, 0);
-	if (*s || s == argv[2] || nblocks < 2 || nblocks > 1024)
+	printf("nblocks: %d\n", nblocks);
+	if (*s || s == argv[2] || nblocks < 2 || nblocks > 1024){
+		printf("entry 232\n");
 		usage();
+	}
 
 	opendisk(argv[1]);
 

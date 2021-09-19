@@ -171,7 +171,7 @@ mem_init(void)
 	// cprintf("start: kern_pgdir addr: %x\n", &kern_pgdir);
 	cprintf("start: end addr: %x\n", (void *)end);
 	kern_pgdir = (pde_t *) boot_alloc(PGSIZE);
-	// memset(kern_pgdir, 0, PGSIZE);
+	memset(kern_pgdir, 0, PGSIZE);
 	// Permissions: kernel R, user R
 	cprintf("kern_pgdir is: %x\n", kern_pgdir);
 	cprintf("kern_pgdir addr: %x\n", &kern_pgdir);

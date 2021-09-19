@@ -70,7 +70,10 @@ duppage(envid_t envid, unsigned pn)
 	// LAB 4: Your code here.
 	int perm = PTE_U | PTE_P;
 
-	if(uvpt[pn] & (PTE_W | PTE_COW)){
+	if(uvpt[pn] & PTE_SHARE){
+		r = sys_page_map(thisenv->env_id, (void *)(pn * PGSIZE), envid, (void *)(pn * PGSIZE), uvpt[pn] & PTE_SYSCALL);
+		if(r < 0) return r;
+	}else if(uvpt[pn] & (PTE_W | PTE_COW)){
 		int new_perm = perm | PTE_COW;
 		// remap chile
 

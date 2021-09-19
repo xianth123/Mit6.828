@@ -52,7 +52,7 @@ bc_pgfault(struct UTrapframe *utf)
 	r = sys_page_alloc(0, (void *)addr, PTE_P | PTE_W | PTE_U);
 	if(r < 0) panic("[fs/bc.c] bc_pgfault sys_page_alloc error: %e", r);
 
-	r = ide_read(blockno * BLKBITSIZE, addr, BLKSECTS);
+	r = ide_read(blockno * BLKSECTS, addr, BLKSECTS);
 	if(r < 0) panic("[fs/bc.c] bc_pgfault ide_read error: %e", r);
 
 	// Clear the dirty bit for the disk block page since we just read the
@@ -90,7 +90,7 @@ flush_block(void *addr)
 		if(r < 0) panic("[fs/bc.c] flush_block sys_page_map error: %e", r);
 	}
 
-	panic("flush_block not implemented");
+	// panic("flush_block not implemented");
 }
 
 // Test that the block cache works, by smashing the superblock and

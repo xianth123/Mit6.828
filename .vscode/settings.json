@@ -7,7 +7,8 @@
         "lib.h": "c",
         "env.h": "c",
         "syscall.h": "c",
-        "type_traits": "c"
+        "type_traits": "c",
+        "fs.h": "c"
     },
     "editor.wordWrap": "on"
 }

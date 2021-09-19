@@ -9,6 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/obj/kern/kernel",
+            // "program": "${workspaceFolder}/obj/fs/fs",
             "args": [],
             "stopAtEntry": true,
             "cwd": "${workspaceFolder}",
